@@ -1,0 +1,157 @@
+/******************************************************************************
+ * README                                                                     *
+ * Authors: Wolfgang Richter and Ekaterina Taralova and Karl Naden            *
+ * Contact: {wolf,etaralova,kbn}@cs.cmu.edu                                   *
+ *                                                                            *
+ * Description: This file contains the README for a perf counters interfacing *
+ *              library                                                       *
+ *                                                                            *
+ ******************************************************************************/
+
+Table Of Contents       ..................................... [TOC]
+
+Introduction            ..................................... [INTRO-1]
+Dependencies            ..................................... [DEPEN-2]
+Building                ..................................... [BUILD-3]
+Using the Library       ..................................... [USING-4]
+License                 ..................................... [LICEN-5]
+
+
+
+[INTRO-1] Introduction
+--------------------------------------------------------------------------------
+This document describes the libperf library implemented as an interface to a
+syscall introduced in a mature form into the Linux Kernel mainline in 2009. This
+interface was previously only usable via a binary tool called 'perf' included in
+Linux Kernel source distributions today.
+
+There are several key shortcomings of interfacing with the system call only
+through a controlled binary.  The first is that the granularity of tracing
+hardware performance counter registers and software tracepoints is at a whole
+binary level.  There is no method for tracing portions of code within the
+application if desired.  This is because there is no nice API exposed to
+userspace developers that can interface with this system call.  The second
+shortcoming is that the tool, although extensive, may not account for every
+possible use case for these counters and tracepoints.  Offering a
+non-restrictive API to userspace gives developers full power and freedom to
+implement any functionality desired.
+
+libperf closes this gap and provides an API for interfacing with the system
+call used by the perf tool.  This provides all of the power of the tool with
+the granularity of snippets of code.
+
+
+
+
+[DEPEN-2] Dependencies
+--------------------------------------------------------------------------------
+libperf depends only on having a Linux Kernel source tree compatible with your
+installed kernel boot image.  This is because libperf includes headers and code
+from the perf tool.
+
+Do this on your system [uname -a]:
+
+     test@test:/tmp$ uname -a
+     Linux test 2.6.32-25-generic #45-Ubuntu SMP Sat Oct 16 19:48:22 UTC 2010  \
+     i686 GNU/Linux
+
+Which tells us that the kernel we have installed is 2.6.32-25-generic.
+
+Now to install the source code:
+
+     test@test:/tmp$ apt-get source linux-image-2.6.32-25-generic
+
+Which will install the Linux Kernel source code into a subfolder of the current
+folder.
+
+
+
+
+[BUILD-3] Building
+--------------------------------------------------------------------------------
+Once the kernel source tree is installed, modify the Makefile to point to the
+proper folder containing the perf tool source code, and also to point to the
+folder where you build/store the libperf.so binary.
+
+Then just run make as:
+
+     cd perf
+     make
+
+'make test' will run a demo app defined in 'libperf_test.c'.
+
+
+
+
+[USING-4] Using the Library
+--------------------------------------------------------------------------------
+Using the library is fairly simple.  Obtain a handle into the library using the
+'libperf_initialize' function.  This handle may be used in future library calls.
+'libperf_readcounter' is used to read a single 64 bit counter from the library.
+The available counters are defined in the 'enum libperf_tracepoint'.  There are
+two ways of shutting the library down cleanly:
+
+'libperf_finalize' -- use this function to provide a log of all counters
+'libperf_close' -- use this function to just shutdown without final logging
+
+'libperf_finalize' appends logs into a file named after the 'pid' value passed
+into 'libperf_initialize'.  If the pid value is -1, then the library will use
+the system call 'gettid' to obtain the thread id of the current running thread
+of execution (equivalent to the pid of a single-threaded application).  Also,
+setting the 'cpu' value to -1 when initializing causes the libperf counters to
+count across all cpu's for a given thread id.
+
+'libperf_getlogger' will give a file stream to write to.  This is the same log
+file used by the 'libperf_finalize' method and is unique per thread.
+
+'libperf_unit_test' performs a small test of the library, allocating a
+gigabyte of memory, touching each byte, and logging performance counters.
+
+Example using some of the functions in an example:
+
+     #include <inttypes.h> /* for PRIu64 definition */
+     #include <stdint.h>   /* for uint64_t */
+     #include <stdio.h>    /* for printf family */
+     #include <stdlib.h>   /* for EXIT_SUCCESS definition */
+     #include "libperf.h"  /* standard libperf include */
+
+     int main(int argc, char* argv[])
+     {
+          struct perf_data* pd = libperf_initialize(-1,-1); /* init lib */
+          uint64_t counter = libperf_readcounter(pd,
+                                                 LIBPERF_COUNT_HW_INSTRUCTIONS);
+                                                /* obtain counter value */
+
+          fprintf(stdout, "counter read: %"PRIu64"\n", counter); /* printout */
+
+          FILE* log = libperf_getlogger(pd); /* get log file stream */
+          fprintf(log, "custom log message\n"); /* print a custom log message */
+
+          libperf_finalize(pd, 0); /* log all counter values */
+
+          return EXIT_SUCCESS; /* success exit value */
+     }
+
+
+
+
+[LICEN-5] License
+--------------------------------------------------------------------------------
+libperf is licensed under the GPLv2 because it includes GPLv2 licensed code from
+the perf tool included in the Linux Kernel source tree.  You may find a copy of
+this license in the file 'gpl-2.0.txt'.  In addition, all source code contains
+a notice at the top with license details.
+
+What this means to you: if you release applications or libraries linking with or
+using code from libperf, either statically or dynamically, your applications or
+libraries must also be released under the terms of the GPLv2.  Source code must
+be made available and contain the proper copyright notices as described in the
+GPLv2.
+
+See this official Free Software Foundation FAQ question as reference:
+
+     If a library is released under the GPL (not the LGPL), does that mean
+     that any program which uses it has to be under the GPL?
+          
+          Yes, because the program as it is actually run includes the
+          library.
