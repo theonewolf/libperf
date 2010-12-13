@@ -121,7 +121,7 @@ enum libperf_tracepoint
  *
  * return - perf_data structure for use in future library calls
  */
-struct perf_data*
+struct perf_data *
 libperf_initialize(int pid, int cpu);
 
 /* libperf_finalize
@@ -135,7 +135,7 @@ libperf_initialize(int pid, int cpu);
  * void* id - a unique identifier to tag log messages
  */
 void
-libperf_finalize(struct perf_data* pd, void* id);
+libperf_finalize(struct perf_data *pd, void *id);
 
 /* libperf_readcounter
  *
@@ -158,7 +158,7 @@ libperf_finalize(struct perf_data* pd, void* id);
  * return - 64 bit counter value
  */
 uint64_t
-libperf_readcounter(struct perf_data* pd, int counter);
+libperf_readcounter(struct perf_data *pd, int counter);
 
 /* libperf_close
  *
@@ -169,7 +169,7 @@ libperf_readcounter(struct perf_data* pd, int counter);
  * struct perf_data* pd - library structure obtained from libperf_initialize()
  */
 void
-libperf_close(struct perf_data* pd);
+libperf_close(struct perf_data *pd);
 
 /* libperf_getlogger
  *
@@ -177,8 +177,8 @@ libperf_close(struct perf_data* pd);
  *
  * return - file descriptor to the log file associated with pd
  */
-FILE*
-libperf_getlogger(struct perf_data* pd);
+FILE *
+libperf_getlogger(struct perf_data *pd);
 
 /* libperf_unit_test
  *
@@ -189,10 +189,9 @@ libperf_getlogger(struct perf_data* pd);
  * return - always should return 0, there is no failure value
  */
 int
-libperf_unit_test(void*);
+libperf_unit_test(void *);
 
 #ifdef __cplusplus
 }
 #endif
-
 #endif

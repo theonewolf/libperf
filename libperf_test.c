@@ -1,7 +1,8 @@
 /******************************************************************************
  * libperf_test.c                                                             *
  *                                                                            *
- * This is a small example program demoing linking with and using libperf.    *
+ * This is a small example program demoing linking with and using libperf,    *
+ * used for unit testing.                                                     *
  *                                                                            *
  * libperf interfaces with the kernel performance counters subsystem          *
  * Copyright (C) 2010 Wolfgang Richter, Ekaterina Taralova, Karl Naden        *

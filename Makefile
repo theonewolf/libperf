@@ -22,7 +22,7 @@
 # 02110-1301, USA.                                                             #
 ################################################################################
 
-KERNEL_PERF=-I/home/wolf/Desktop/linux-2.6.35/tools/perf
+KERNEL_PERF=-I/home/wolf/Desktop/linux-2.6.32/tools/perf
 LIBPERF_DIR=/home/wolf/Dropbox/Projects/LightSpeed/src/libperf
 
 default:
