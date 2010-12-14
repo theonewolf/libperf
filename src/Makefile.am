@@ -1,7 +1,7 @@
 lib_LTLIBRARIES = libperf.la
 bin_PROGRAMS = test example benchmark
 
-EXTRA_DIST = libperf.h libperf_example.c libperf_test.c libperf_benchmark.c
+EXTRA_DIST = libperf.h perf_event.h libperf_example.c libperf_test.c libperf_benchmark.c
 
 libperf_la_SOURCES = libperf.c
 
