@@ -1,0 +1,13 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+Name: @PACKAGE_NAME@ 
+Description: A library interfacing with the Linux Kernel Performance Counters subsytem.
+Requires.private:
+Version: @PACKAGE_VERSION@
+URL: @PACKAGE_URL@
+Libs: -L${libdir} -lperf
+Cflags: -I${includedir}/perf -I${libdir}/perf/include
+
