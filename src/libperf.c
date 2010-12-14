@@ -252,7 +252,7 @@ libperf_readcounter(struct perf_data *pd, int counter)
 {
   uint64_t value;
 
-  assert(counter > 0 && counter < __LIBPERF_MAX_COUNTERS);
+  assert(counter >= 0 && counter < __LIBPERF_MAX_COUNTERS);
 
   if (counter == __LIBPERF_MAX_COUNTERS)
     return (uint64_t) (rdclock() - pd->wall_start);
@@ -266,7 +266,7 @@ libperf_readcounter(struct perf_data *pd, int counter)
 int
 libperf_enablecounter(struct perf_data *pd, int counter)
 {
-  assert(counter > 0 && counter < __LIBPERF_MAX_COUNTERS);
+  assert(counter >= 0 && counter < __LIBPERF_MAX_COUNTERS);
   if (pd->fds[counter] == -1)
     assert((pd->fds[counter] = sys_perf_event_open(&(pd->attrs[counter]), pd->pid, pd->cpu, pd->group, 0)) != -1);
 
@@ -276,7 +276,7 @@ libperf_enablecounter(struct perf_data *pd, int counter)
 int
 libperf_disablecounter(struct perf_data *pd, int counter)
 {
-  assert(counter > 0 && counter < __LIBPERF_MAX_COUNTERS);
+  assert(counter >= 0 && counter < __LIBPERF_MAX_COUNTERS);
   if (pd->fds[counter] == -1)
     return 0;
   
