@@ -71,6 +71,14 @@ Then just run ./configure and make as:
      make
      sudo make install
 
+If you're a developer of libperf, there's one extra step:
+
+     cd libperf
+     ./bootstrap.sh
+     ./configure
+     make
+     sudo make install
+
 
 
 
