@@ -129,6 +129,15 @@ Example using some of the functions in an example:
           return EXIT_SUCCESS; /* success exit value */
      }
 
+To compile the previous program the proper flags must be passed to 'gcc':
+
+     test@test:/tmp$ pkg-config --libs --cflags libperf
+     -I/usr/local/include/perf -I/usr/local/lib/perf/include  -L/usr/local/lib -lperf
+
+which tells us to do:
+
+     gcc -I/usr/local/include/perf -I/usr/local/lib/perf/include -L/usr/local/lib -lperf example.c
+
 
 
 

@@ -1,6 +1,6 @@
 lib_LTLIBRARIES = libperf.la
 
-EXTRA_DIST = libperf.h
+EXTRA_DIST = libperf.h libperf_example.c libperf_test.c libperf_benchmark.c
 
 libperf_la_SOURCES = libperf.c
 
@@ -13,3 +13,12 @@ libperf_include_HEADERS = libperf.h
 pkgconfigdir = $(libdir)/pkgconfig
 
 pkgconfig_DATA = libperf.pc
+
+test_SOURCES = libperf_test.c
+test_LDADD = libperf.la
+
+example_SOURCES = libperf_example.c
+example_LDADD = libperf.la
+
+benchmark_SOURCES = libperf_benchmark.c
+benchmark_LDADD = libperf.la
