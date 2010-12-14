@@ -33,7 +33,11 @@ main(int argc, char *argv[])
 {
   struct perf_data *pd = libperf_initialize(-1, -1);                         /* init lib */
 
+  libperf_enablecounter(pd, LIBPERF_COUNT_HW_INSTRUCTIONS);                  /* enable HW counter */
+
   uint64_t counter = libperf_readcounter(pd, LIBPERF_COUNT_HW_INSTRUCTIONS); /* obtain counter value */
+
+  libperf_disablecounter(pd, LIBPERF_COUNT_HW_INSTRUCTIONS);                 /* disable HW counter */
 
   fprintf(stdout, "counter read: %" PRIu64 "\n", counter);                   /* printout */
 

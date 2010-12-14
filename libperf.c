@@ -30,26 +30,40 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stropts.h>
 #include <sys/syscall.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "libperf.h"
-#include "perf.h"
+#include "perf_event.h"
 
-
-#define MAX_COUNTERS 256
-#define ARRAY_SIZE(x) (sizeof(x)/sizeof(x[0]))
+#define __LIBPERF_MAX_COUNTERS 32 
+#define __LIBPERF_ARRAY_SIZE(x) (sizeof(x)/sizeof(x[0]))
 
 /* lib struct */
 struct perf_data
 {
-  int *fds;
+  int group;
+  int fds[__LIBPERF_MAX_COUNTERS];
   struct perf_event_attr *attrs;
   FILE *log;
+  pid_t pid;
+  int cpu;
   unsigned long long wall_start;
 };
+
+/* rdclock() function */
+static inline unsigned long long rdclock(void)
+{
+  struct timespec ts;
+
+  clock_gettime(CLOCK_MONOTONIC, &ts);
+  return ts.tv_sec * 1000000000ULL + ts.tv_nsec;
+}
+
 
 /* stats section */
 struct stats
@@ -58,7 +72,7 @@ struct stats
 };
 
 static void
-update_stats(struct stats *stats, u64 val)
+update_stats(struct stats *stats, uint64_t val)
 {
   double delta;
 
@@ -74,34 +88,20 @@ avg_stats(struct stats *stats)
   return stats->mean;
 }
 
-/*
- * http://en.wikipedia.org/wiki/Algorithms_for_calculating_variance
- *
- *       (\Sum n_i^2) - ((\Sum n_i)^2)/n
- * s^2 = -------------------------------
- *                  n - 1
- *
- * http://en.wikipedia.org/wiki/Stddev
- *
- * The std dev of the mean is related to the std dev by:
- *
- *             s
- * s_mean = -------
- *          sqrt(n)
- *
- */
-static double
-stddev_stats(struct stats *stats)
+/* perf_event_open syscall wrapper */
+static inline int
+sys_perf_event_open(struct perf_event_attr *attr,
+                    pid_t pid, int cpu, int group_fd,
+                    unsigned long flags)
 {
-  double variance = stats->M2 / (stats->n - 1);
-
-  double variance_mean = variance / stats->n;
-
-  return sqrt(variance_mean);
+  attr->size = sizeof(*attr);
+  return syscall(__NR_perf_event_open, attr, pid, cpu,
+                 group_fd, flags);
 }
 
+
 /* gettid syscall wrapper */
-pid_t
+static inline pid_t
 gettid()
 {
   return syscall(SYS_gettid);
@@ -151,22 +151,27 @@ static struct perf_event_attr default_attrs[] = {
 /* thread safe */
 /* sets up a set of fd's for profiling code to read from */
 struct perf_data *
-libperf_initialize(int pid, int cpu)
+libperf_initialize(pid_t pid, int cpu)
 {
-  int nr_counters = ARRAY_SIZE(default_attrs);
+  int nr_counters = __LIBPERF_ARRAY_SIZE(default_attrs);
 
   int i;
 
   struct perf_data *pd =
     (struct perf_data *) malloc(sizeof(struct perf_data));
-  int *fds = (int *) malloc(nr_counters * sizeof(int));
 
   assert(pd != NULL);
-  assert(fds != NULL);          /* pointer quick check */
-  pd->fds = fds;
 
   if (pid == -1)
     pid = gettid();
+
+  pd->group = -1;
+
+  for (i = 0; i < __LIBPERF_ARRAY_SIZE(pd->fds); i++)
+    pd->fds[i] = -1;
+  
+  pd->pid = pid;
+  pd->cpu = cpu;
 
   char logname[256];
 
@@ -193,10 +198,10 @@ libperf_initialize(int pid, int cpu)
   {
     attr = attrs + i;
     attr->inherit = 1;          /* default */
-    attr->disabled = 0;         /* enable them now... */
+    attr->disabled = 1;         /* disable them now... */
     attr->enable_on_exec = 0;
-    fds[i] = sys_perf_event_open(attr, pid, cpu, -1, 0);
-    assert(fds[i] >= 0);
+    pd->fds[i] = sys_perf_event_open(attr, pid, cpu, -1, 0);
+    assert(pd->fds[i] >= 0);
   }
 
   pd->wall_start = rdclock();
@@ -209,11 +214,11 @@ libperf_initialize(int pid, int cpu)
 void
 libperf_finalize(struct perf_data *pd, void *id)
 {
-  int i, result, nr_counters = ARRAY_SIZE(default_attrs);
+  int i, result, nr_counters = __LIBPERF_ARRAY_SIZE(default_attrs);
 
   int *fds = pd->fds;
 
-  u64 count[3];                 /* potentially 3 values */
+  uint64_t count[3];                 /* potentially 3 values */
 
   struct stats event_stats[nr_counters];
 
@@ -222,8 +227,8 @@ libperf_finalize(struct perf_data *pd, void *id)
   for (i = 0; i < nr_counters; i++)
   {
     assert(fds[i] >= 0);
-    result = read(fds[i], count, sizeof(u64));
-    assert(result == sizeof(u64));
+    result = read(fds[i], count, sizeof(uint64_t));
+    assert(result == sizeof(uint64_t));
 
     update_stats(&event_stats[i], count[0]);
 
@@ -238,7 +243,6 @@ libperf_finalize(struct perf_data *pd, void *id)
   fprintf(pd->log, "Stats[%p, %d]: %14.9f\n", id, i,
           avg_stats(&walltime_nsecs_stats) / 1e9);
   fclose(pd->log);
-  free(pd->fds);
   free(pd->attrs);
   free(pd);
 }
@@ -248,16 +252,41 @@ libperf_readcounter(struct perf_data *pd, int counter)
 {
   uint64_t value;
 
+  assert(counter > 0 && counter < __LIBPERF_MAX_COUNTERS);
+
+  if (counter == __LIBPERF_MAX_COUNTERS)
+    return (uint64_t) (rdclock() - pd->wall_start);
+
   assert(read(pd->fds[counter], &value, sizeof(uint64_t)) ==
          sizeof(uint64_t));
   
   return value;
 }
 
+int
+libperf_enablecounter(struct perf_data *pd, int counter)
+{
+  assert(counter > 0 && counter < __LIBPERF_MAX_COUNTERS);
+  if (pd->fds[counter] == -1)
+    assert((pd->fds[counter] = sys_perf_event_open(&(pd->attrs[counter]), pd->pid, pd->cpu, pd->group, 0)) != -1);
+
+  return ioctl(pd->fds[counter], PERF_EVENT_IOC_ENABLE);
+}
+
+int
+libperf_disablecounter(struct perf_data *pd, int counter)
+{
+  assert(counter > 0 && counter < __LIBPERF_MAX_COUNTERS);
+  if (pd->fds[counter] == -1)
+    return 0;
+  
+  return ioctl(pd->fds[counter], PERF_EVENT_IOC_DISABLE);
+}
+
 void
 libperf_close(struct perf_data *pd)
 {
-  int i, nr_counters = ARRAY_SIZE(default_attrs);
+  int i, nr_counters = __LIBPERF_ARRAY_SIZE(default_attrs);
 
   for (i = 0; i < nr_counters; i++)
   {
@@ -266,7 +295,6 @@ libperf_close(struct perf_data *pd)
   }
   
   fclose(pd->log);
-  free(pd->fds);
   free(pd->attrs);
   free(pd);
 }

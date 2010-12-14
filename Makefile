@@ -22,11 +22,10 @@
 # 02110-1301, USA.                                                             #
 ################################################################################
 
-KERNEL_PERF=-I/home/wolf/Desktop/linux-2.6.32/tools/perf
 LIBPERF_DIR=/home/wolf/Dropbox/Projects/LightSpeed/src/libperf
 
 default:
-	gcc -Wall $(KERNEL_PERF) -fPIC -c libperf.c
+	gcc -Wall -fPIC -c libperf.c
 	gcc -Wall -shared -o libperf.so libperf.o -lm -lrt
 	gcc -Wall -L`pwd` -lperf libperf_test.c -o libperf_test
 	gcc -Wall -L`pwd` -lperf benchmark.c -o bench

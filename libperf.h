@@ -40,8 +40,8 @@
  * 02110-1301, USA.                                                           *
  ******************************************************************************/
 
-#ifndef LIBPERF_H
-#define LIBPERF_H
+#ifndef _LIBPERF_H
+#define _LIBPERF_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -147,18 +147,43 @@ libperf_finalize(struct perf_data *pd, void *id);
  * Proper method of printing value:
  *
  *
- *     #include <inttypes.h>
- *     #include <stdio.h>
+ *      #define __STDC_FORMAT_MACROS
+ *      #include <inttypes.h>
+ *      #include <stdio.h>
  *
- *     ...
+ *      ...
  *
- *       fprintf(stdout, "%" PRIu64 "\n", value);
+ *      fprintf(stdout, "%" PRIu64 "\n", value);
  *
  *
  * return - 64 bit counter value
  */
 uint64_t
 libperf_readcounter(struct perf_data *pd, int counter);
+
+/* libperf_enablecounter
+ *
+ * This function enables an individual counter.
+ *
+ * struct perf_data* pd - library structure obtained from libperf_initialize()
+ * int counter - pass in a constant value defined in enum libperf_tracepoint
+ *
+ * return - same semantics as ioctl 
+ */
+int
+libperf_enablecounter(struct perf_data *pd, int counter);
+
+/* libperf_disablecounter
+ *
+ * This function disables an individual counter.
+ *
+ * struct perf_data* pd - library structure obtained from libperf_initialize()
+ * int counter - pass in a constant value defined in enum libperf_tracepoint
+ *
+ * return - same semantics as ioctl 
+ */
+int
+libperf_disablecounter(struct perf_data *pd, int counter);
 
 /* libperf_close
  *
@@ -194,4 +219,4 @@ libperf_unit_test(void *);
 #ifdef __cplusplus
 }
 #endif
-#endif
+#endif /* __LIBPERF_H */
