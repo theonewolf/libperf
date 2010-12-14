@@ -25,15 +25,14 @@
 # 02110-1301, USA.                                                            #
 ###############################################################################
 
-LIB_DIR=/home/wolf/Dropbox/Projects/LightSpeed/src/libperf
 TRIALS="{1..10}"
 
 # perf wrapped
-for i in $TRIALS; do sudo LD_LIBRARY_PATH=$LIB_DIR ./bench 0 >> cpu.libperf.log; done
-for i in $TRIALS; do sudo LD_LIBRARY_PATH=$LIB_DIR ./bench 3 >> mem.libperf.log; done
-for i in $TRIALS; do sudo LD_LIBRARY_PATH=$LIB_DIR ./bench 1  >> threads.libperf.log; done
-for i in $TRIALS; do sudo LD_LIBRARY_PATH=$LIB_DIR ./bench 5  >> IO.libperf.log; done
-for i in $TRIALS; do sudo LD_LIBRARY_PATH=$LIB_DIR ./bench 2  >> mutex.libperf.log; done
+for i in $TRIALS; do sudo ./bench 0 >> cpu.libperf.log; done
+for i in $TRIALS; do sudo ./bench 3 >> mem.libperf.log; done
+for i in $TRIALS; do sudo ./bench 1  >> threads.libperf.log; done
+for i in $TRIALS; do sudo ./bench 5  >> IO.libperf.log; done
+for i in $TRIALS; do sudo ./bench 2  >> mutex.libperf.log; done
 
 # bare
 for i in $TRIALS; do sudo /usr/bin/sysbench --test=cpu --cpu-max-prime=20000 run >> cpu.bare.log; done
