@@ -30,7 +30,7 @@ int main(int argc, char* argv[])
 {
 	void * n = 0;
 	int ret = libperf_unit_test(n);
-	struct perf_data* pd = libperf_initialize(0,-1);
+	struct libperf_data* pd = libperf_initialize(0,-1);
 	fprintf(stdout, "ret: %d\n", ret);
 	libperf_finalize(pd,n);
 	return 0;

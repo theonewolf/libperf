@@ -40,8 +40,8 @@
  * 02110-1301, USA.                                                           *
  ******************************************************************************/
 
-#ifndef _LIBPERF_H
-#define _LIBPERF_H
+#ifndef __LIB_LIBPERF_H
+#define __LIB_LIBPERF_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -51,7 +51,7 @@ extern "C" {
 #include <stdio.h>
 
 /* lib struct */
-struct perf_data;
+struct libperf_data;
 
 /* lib constants */
 enum libperf_tracepoint
@@ -119,9 +119,9 @@ enum libperf_tracepoint
  * int pid - pass in gettid()/getpid() value, -1 for current process
  * int cpu - pass in cpuid to track, -1 for any
  *
- * return - perf_data structure for use in future library calls
+ * return - libperf_data structure for use in future library calls
  */
-struct perf_data *
+struct libperf_data *
 libperf_initialize(int pid, int cpu);
 
 /* libperf_finalize
@@ -131,17 +131,17 @@ libperf_initialize(int pid, int cpu);
  * pid/tid that was used when calling libperf_initialize, and
  * they are saved in the same location where the binary is run from.
  *
- * struct perf_data* pd - library structure obtained from libperf_initialize()
+ * struct libperf_data* pd - library structure obtained from libperf_initialize()
  * void* id - a unique identifier to tag log messages
  */
 void
-libperf_finalize(struct perf_data *pd, void *id);
+libperf_finalize(struct libperf_data *pd, void *id);
 
 /* libperf_readcounter
  *
  * This function reads an individual counter.
  *
- * struct perf_data* pd - library structure obtained from libperf_initialize()
+ * struct libperf_data* pd - library structure obtained from libperf_initialize()
  * int counter - pass in a constant value defined in enum libperf_tracepoint
  *
  * Proper method of printing value:
@@ -159,31 +159,31 @@ libperf_finalize(struct perf_data *pd, void *id);
  * return - 64 bit counter value
  */
 uint64_t
-libperf_readcounter(struct perf_data *pd, int counter);
+libperf_readcounter(struct libperf_data *pd, int counter);
 
 /* libperf_enablecounter
  *
  * This function enables an individual counter.
  *
- * struct perf_data* pd - library structure obtained from libperf_initialize()
+ * struct libperf_data* pd - library structure obtained from libperf_initialize()
  * int counter - pass in a constant value defined in enum libperf_tracepoint
  *
  * return - same semantics as ioctl 
  */
 int
-libperf_enablecounter(struct perf_data *pd, int counter);
+libperf_enablecounter(struct libperf_data *pd, int counter);
 
 /* libperf_disablecounter
  *
  * This function disables an individual counter.
  *
- * struct perf_data* pd - library structure obtained from libperf_initialize()
+ * struct libperf_data* pd - library structure obtained from libperf_initialize()
  * int counter - pass in a constant value defined in enum libperf_tracepoint
  *
  * return - same semantics as ioctl 
  */
 int
-libperf_disablecounter(struct perf_data *pd, int counter);
+libperf_disablecounter(struct libperf_data *pd, int counter);
 
 /* libperf_close
  *
@@ -191,19 +191,21 @@ libperf_disablecounter(struct perf_data *pd, int counter);
  * It should always be called when you're finished tracing to avoid memory
  * leaks.
  *
- * struct perf_data* pd - library structure obtained from libperf_initialize()
+ * struct libperf_data* pd - library structure obtained from libperf_initialize()
  */
 void
-libperf_close(struct perf_data *pd);
+libperf_close(struct libperf_data *pd);
 
 /* libperf_getlogger
  *
  * This function returns a file descriptor to the libperf log file.
  *
+ * struct libperf_data* pd - library structure obtained from libperf_initialize()
+ *
  * return - file descriptor to the log file associated with pd
  */
 FILE *
-libperf_getlogger(struct perf_data *pd);
+libperf_getlogger(struct libperf_data *pd);
 
 /* libperf_unit_test
  *

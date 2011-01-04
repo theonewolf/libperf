@@ -44,7 +44,7 @@
 #define __LIBPERF_ARRAY_SIZE(x) (sizeof(x)/sizeof(x[0]))
 
 /* lib struct */
-struct perf_data
+struct libperf_data
 {
   int group;
   int fds[__LIBPERF_MAX_COUNTERS];
@@ -63,7 +63,6 @@ static inline unsigned long long rdclock(void)
   clock_gettime(CLOCK_MONOTONIC, &ts);
   return ts.tv_sec * 1000000000ULL + ts.tv_nsec;
 }
-
 
 /* stats section */
 struct stats
@@ -98,7 +97,6 @@ sys_perf_event_open(struct perf_event_attr *attr,
   return syscall(__NR_perf_event_open, attr, pid, cpu,
                  group_fd, flags);
 }
-
 
 /* gettid syscall wrapper */
 static inline pid_t
@@ -150,15 +148,15 @@ static struct perf_event_attr default_attrs[] = {
 
 /* thread safe */
 /* sets up a set of fd's for profiling code to read from */
-struct perf_data *
+struct libperf_data *
 libperf_initialize(pid_t pid, int cpu)
 {
   int nr_counters = __LIBPERF_ARRAY_SIZE(default_attrs);
 
   int i;
 
-  struct perf_data *pd =
-    (struct perf_data *) malloc(sizeof(struct perf_data));
+  struct libperf_data *pd =
+    (struct libperf_data *) malloc(sizeof(struct libperf_data));
 
   assert(pd != NULL);
 
@@ -212,7 +210,7 @@ libperf_initialize(pid_t pid, int cpu)
 /* pass in int* from initialize function */
 /* reads from fd's, prints out stats, and closes them all */
 void
-libperf_finalize(struct perf_data *pd, void *id)
+libperf_finalize(struct libperf_data *pd, void *id)
 {
   int i, result, nr_counters = __LIBPERF_ARRAY_SIZE(default_attrs);
 
@@ -248,7 +246,7 @@ libperf_finalize(struct perf_data *pd, void *id)
 }
 
 uint64_t
-libperf_readcounter(struct perf_data *pd, int counter)
+libperf_readcounter(struct libperf_data *pd, int counter)
 {
   uint64_t value;
 
@@ -264,7 +262,7 @@ libperf_readcounter(struct perf_data *pd, int counter)
 }
 
 int
-libperf_enablecounter(struct perf_data *pd, int counter)
+libperf_enablecounter(struct libperf_data *pd, int counter)
 {
   assert(counter >= 0 && counter < __LIBPERF_MAX_COUNTERS);
   if (pd->fds[counter] == -1)
@@ -274,7 +272,7 @@ libperf_enablecounter(struct perf_data *pd, int counter)
 }
 
 int
-libperf_disablecounter(struct perf_data *pd, int counter)
+libperf_disablecounter(struct libperf_data *pd, int counter)
 {
   assert(counter >= 0 && counter < __LIBPERF_MAX_COUNTERS);
   if (pd->fds[counter] == -1)
@@ -284,7 +282,7 @@ libperf_disablecounter(struct perf_data *pd, int counter)
 }
 
 void
-libperf_close(struct perf_data *pd)
+libperf_close(struct libperf_data *pd)
 {
   int i, nr_counters = __LIBPERF_ARRAY_SIZE(default_attrs);
 
@@ -300,7 +298,7 @@ libperf_close(struct perf_data *pd)
 }
 
 FILE *
-libperf_getlogger(struct perf_data *pd)
+libperf_getlogger(struct libperf_data *pd)
 {
   return pd->log;
 }
@@ -308,7 +306,7 @@ libperf_getlogger(struct perf_data *pd)
 int
 libperf_unit_test(void *n)
 {
-  struct perf_data *pd = libperf_initialize(0, -1);
+  struct libperf_data *pd = libperf_initialize(0, -1);
 
   char *x = malloc(1024 * 1024 * 1024L);
 

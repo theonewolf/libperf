@@ -58,7 +58,7 @@ main(int argc, char *argv[])
 
   pid_t pid = fork();
 
-  struct perf_data *pd = libperf_initialize(pid, -1);
+  struct libperf_data *pd = libperf_initialize(pid, -1);
 
   if (pid == 0)
   {
