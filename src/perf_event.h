@@ -37,8 +37,8 @@
  * For licencing details see kernel-base/COPYING
  */
 
-#ifndef _LIBPERF_PERF_EVENT_H
-#define _LIBPERF_PERF_EVENT_H
+#ifndef __LIBPERF_PERF_EVENT_H
+#define __LIBPERF_PERF_EVENT_H
 
 #include <linux/types.h>
 #include <linux/ioctl.h>
