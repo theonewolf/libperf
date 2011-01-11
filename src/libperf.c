@@ -26,6 +26,7 @@
 #include <fcntl.h>
 #include <inttypes.h>
 #include <math.h>
+#include <search.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
