@@ -13,6 +13,7 @@ AC_CONFIG_HEADERS([src/common/config.h])
 # Checks for programs.
 AC_PROG_CC
 AC_PROG_INSTALL
+AM_PROG_AR
 
 # Checks for libraries.
 AC_CHECK_LIB([m], [sin])
