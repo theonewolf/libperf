@@ -36,9 +36,9 @@
 #include <sys/stat.h>
 #include <time.h>
 #include <unistd.h>
+#include <linux/perf_event.h>
 
 #include "libperf.h"
-#include "perf_event.h"
 
 #define __LIBPERF_MAX_COUNTERS 32 
 #define __LIBPERF_ARRAY_SIZE(x) (sizeof(x)/sizeof(x[0]))
