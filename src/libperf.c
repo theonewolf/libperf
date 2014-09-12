@@ -36,9 +36,9 @@
 #include <sys/stat.h>
 #include <time.h>
 #include <unistd.h>
+#include <linux/perf_event.h>
 
 #include "libperf.h"
-#include "perf_event.h"
 
 #define __LIBPERF_MAX_COUNTERS 32 
 #define __LIBPERF_ARRAY_SIZE(x) (sizeof(x)/sizeof(x[0]))
@@ -88,13 +88,12 @@ avg_stats(struct stats *stats)
 }
 
 /* perf_event_open syscall wrapper */
-static inline int
-sys_perf_event_open(struct perf_event_attr *attr,
+static long
+sys_perf_event_open(struct perf_event_attr *hw_event,
                     pid_t pid, int cpu, int group_fd,
                     unsigned long flags)
 {
-  attr->size = sizeof(*attr);
-  return syscall(__NR_perf_event_open, attr, pid, cpu,
+  return syscall(__NR_perf_event_open, hw_event, pid, cpu,
                  group_fd, flags);
 }
 
@@ -142,7 +141,7 @@ static struct perf_event_attr default_attrs[] = {
   { .type = PERF_TYPE_HW_CACHE, .config = (PERF_COUNT_HW_CACHE_ITLB | (PERF_COUNT_HW_CACHE_OP_READ << 8) | (PERF_COUNT_HW_CACHE_RESULT_ACCESS << 16))},
   { .type = PERF_TYPE_HW_CACHE, .config = (PERF_COUNT_HW_CACHE_ITLB | (PERF_COUNT_HW_CACHE_OP_READ << 8) | (PERF_COUNT_HW_CACHE_RESULT_MISS << 16))},
   { .type = PERF_TYPE_HW_CACHE, .config = (PERF_COUNT_HW_CACHE_BPU | (PERF_COUNT_HW_CACHE_OP_READ << 8) | (PERF_COUNT_HW_CACHE_RESULT_ACCESS << 16))},
-  { .type = PERF_TYPE_HW_CACHE, .config = (PERF_COUNT_HW_CACHE_BPU | (PERF_COUNT_HW_CACHE_OP_READ << 8) | (PERF_COUNT_HW_CACHE_RESULT_MISS << 16))},
+  /* { .type = PERF_TYPE_HW_CACHE, .config = (PERF_COUNT_HW_CACHE_BPU | (PERF_COUNT_HW_CACHE_OP_READ << 8) | (PERF_COUNT_HW_CACHE_RESULT_MISS << 16))}, */
 
 };
 
@@ -155,10 +154,13 @@ libperf_initialize(pid_t pid, int cpu)
 
   int i;
 
-  struct libperf_data *pd =
-    (struct libperf_data *) malloc(sizeof(struct libperf_data));
+  struct libperf_data *pd = malloc(sizeof(struct libperf_data));
 
-  assert(pd != NULL);
+  if (pd == NULL)
+    {
+      perror("malloc");
+      exit(EXIT_FAILURE);
+    }
 
   if (pid == -1)
     pid = gettid();
@@ -167,18 +169,21 @@ libperf_initialize(pid_t pid, int cpu)
 
   for (i = 0; i < __LIBPERF_ARRAY_SIZE(pd->fds); i++)
     pd->fds[i] = -1;
-  
+
   pd->pid = pid;
   pd->cpu = cpu;
 
   char logname[256];
 
-  struct perf_event_attr *attr;
-
   struct perf_event_attr *attrs =
-    (struct perf_event_attr *) malloc(sizeof(struct perf_event_attr) *
-                                      nr_counters);
-  assert(attrs != NULL);
+    malloc(nr_counters * sizeof(struct perf_event_attr));
+
+  if(attrs == NULL)
+    {
+      perror("malloc");
+      exit(EXIT_FAILURE);
+    }
+
   memcpy(attrs, default_attrs, sizeof(default_attrs));
   pd->attrs = attrs;
   assert(snprintf(logname, sizeof(logname), "%d", pid) >= 0);
@@ -193,14 +198,20 @@ libperf_initialize(pid_t pid, int cpu)
   assert(pd->log != NULL);
 
   for (i = 0; i < nr_counters; i++)
-  {
-    attr = attrs + i;
-    attr->inherit = 1;          /* default */
-    attr->disabled = 1;         /* disable them now... */
-    attr->enable_on_exec = 0;
-    pd->fds[i] = sys_perf_event_open(attr, pid, cpu, -1, 0);
-    assert(pd->fds[i] >= 0);
-  }
+    {
+      attrs[i].size = sizeof(struct perf_event_attr);
+      attrs[i].inherit = 1;          /* default */
+      attrs[i].disabled = 1;         /* disable them now... */
+      attrs[i].enable_on_exec = 0;
+      pd->fds[i] = sys_perf_event_open(&attrs[i], pid, cpu, -1, 0);
+      if (pd->fds[i] < 0)
+	{
+	  fprintf(stderr, "At event %d/%d\n", i, nr_counters);
+	  perror("sys_perf_event_open");
+	  exit(EXIT_FAILURE);
+	}
+
+    }
 
   pd->wall_start = rdclock();
   return pd;

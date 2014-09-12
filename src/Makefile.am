@@ -1,5 +1,5 @@
 lib_LTLIBRARIES = libperf.la
-bin_PROGRAMS = test example benchmark
+check_PROGRAMS = test example benchmark
 
 EXTRA_DIST = libperf.h perf_event.h libperf_example.c libperf_test.c libperf_benchmark.c
 
@@ -7,9 +7,7 @@ libperf_la_SOURCES = libperf.c
 
 libperf_la_LDFLAGS = -version-info $(LIBPERF_SO_VERSION)
 
-libperf_includedir = $(includedir)/libperf/libperf
-
-libperf_include_HEADERS = libperf.h
+include_HEADERS = libperf.h
 
 pkgconfigdir = $(libdir)/pkgconfig
 
