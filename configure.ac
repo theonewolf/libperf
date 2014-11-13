@@ -7,7 +7,7 @@ AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_MACRO_DIR([build-aux/m4])
 AM_INIT_AUTOMAKE([1.11 foreign -Wall -Werror])
 AM_SILENT_RULES([yes])
-AC_CONFIG_SRCDIR([src/perf_event.h])
+AC_CONFIG_SRCDIR([src/libperf.h])
 AC_CONFIG_HEADERS([src/common/config.h])
 
 # Checks for programs.
