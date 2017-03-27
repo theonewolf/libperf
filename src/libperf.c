@@ -207,7 +207,6 @@ libperf_initialize(pid_t pid, int cpu)
     attrs[i].enable_on_exec = 0;
     pd->fds[i] = sys_perf_event_open(&attrs[i], pid, cpu, -1, 0);
     if (pd->fds[i] < 0) {
-      free(attrs);
       goto close;
     }
   }
@@ -222,6 +221,14 @@ close:
 		close(pd->fds[i]);
 	}
 error:
+	if (attrs) {
+		free(attrs);
+		attrs = NULL;
+	}
+	if (pd) {
+		free(pd);
+		pd = NULL;
+	}
   return NULL;
 }
 
