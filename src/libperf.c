@@ -216,7 +216,7 @@ libperf_initialize(pid_t pid, int cpu)
 
 close:
 	close(fd);
-	close(pd->log);
+	fclose(pd->log);
 	for (i = 0; i < nr_counters; i++) {
 		close(pd->fds[i]);
 	}
