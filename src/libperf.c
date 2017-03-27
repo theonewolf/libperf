@@ -334,6 +334,10 @@ libperf_unit_test(void *n)
 {
   struct libperf_data *pd = libperf_initialize(0, -1);
 
+	if (!pd) {
+		return -1;
+	}
+
   char *x = malloc(1024 * 1024 * 1024L);
 
   unsigned long int i;
