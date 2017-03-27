@@ -156,19 +156,19 @@ libperf_initialize(pid_t pid, int cpu)
 
   struct libperf_data *pd = malloc(sizeof(struct libperf_data));
 
-  if (pd == NULL)
-    {
-      perror("malloc");
-      exit(EXIT_FAILURE);
-    }
+  if (pd == NULL) {
+		goto error;
+	}
 
-  if (pid == -1)
+  if (pid == -1) {
     pid = gettid();
+	}
 
   pd->group = -1;
 
-  for (i = 0; i < __LIBPERF_ARRAY_SIZE(pd->fds); i++)
+  for (i = 0; i < __LIBPERF_ARRAY_SIZE(pd->fds); i++) {
     pd->fds[i] = -1;
+	}
 
   pd->pid = pid;
   pd->cpu = cpu;
@@ -178,11 +178,9 @@ libperf_initialize(pid_t pid, int cpu)
   struct perf_event_attr *attrs =
     malloc(nr_counters * sizeof(struct perf_event_attr));
 
-  if(attrs == NULL)
-    {
-      perror("malloc");
-      exit(EXIT_FAILURE);
-    }
+  if(attrs == NULL) {
+    goto error;
+  }
 
   memcpy(attrs, default_attrs, sizeof(default_attrs));
   pd->attrs = attrs;
@@ -192,29 +190,39 @@ libperf_initialize(pid_t pid, int cpu)
     open(logname, O_WRONLY | O_APPEND | O_CREAT,
          S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 
-  assert(fd != -1);
-  pd->log = fdopen(fd, "a");
-
-  assert(pd->log != NULL);
-
-  for (i = 0; i < nr_counters; i++)
-    {
-      attrs[i].size = sizeof(struct perf_event_attr);
-      attrs[i].inherit = 1;          /* default */
-      attrs[i].disabled = 1;         /* disable them now... */
-      attrs[i].enable_on_exec = 0;
-      pd->fds[i] = sys_perf_event_open(&attrs[i], pid, cpu, -1, 0);
-      if (pd->fds[i] < 0)
-	{
-	  fprintf(stderr, "At event %d/%d\n", i, nr_counters);
-	  perror("sys_perf_event_open");
-	  exit(EXIT_FAILURE);
+  if (fd == -1) {
+		goto error;
 	}
 
+  pd->log = fdopen(fd, "a");
+
+  if (pd->log == NULL) {
+		goto error;
+	}
+
+  for (i = 0; i < nr_counters; i++) {
+    attrs[i].size = sizeof(struct perf_event_attr);
+    attrs[i].inherit = 1;          /* default */
+    attrs[i].disabled = 1;         /* disable them now... */
+    attrs[i].enable_on_exec = 0;
+    pd->fds[i] = sys_perf_event_open(&attrs[i], pid, cpu, -1, 0);
+    if (pd->fds[i] < 0) {
+      free(attrs);
+      goto close;
     }
+  }
 
   pd->wall_start = rdclock();
   return pd;
+
+close:
+	close(fd);
+	close(pd->log);
+	for (i = 0; i < nr_counters; i++) {
+		close(pd->fds[i]);
+	}
+error:
+  return NULL;
 }
 
 /* thread safe */
