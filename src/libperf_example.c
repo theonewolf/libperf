@@ -32,6 +32,10 @@ int
 main(int argc, char *argv[])
 {
   struct libperf_data *pd = libperf_initialize(-1, -1);                      /* init lib */
+  if (!pd) {
+    printf("Error initializing libperf\n");
+    return -1;
+  }
 
   libperf_enablecounter(pd, LIBPERF_COUNT_HW_INSTRUCTIONS);                  /* enable HW counter */
 
