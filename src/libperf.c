@@ -205,12 +205,12 @@ libperf_initialize(pid_t pid, int cpu)
       attrs[i].enable_on_exec = 0;
       pd->fds[i] = sys_perf_event_open(&attrs[i], pid, cpu, -1, 0);
       if (pd->fds[i] < 0)
-	{
-	  fprintf(stderr, "At event %d/%d\n", i, nr_counters);
-	  perror("sys_perf_event_open");
-	  exit(EXIT_FAILURE);
-	}
-
+      {
+        fprintf(stderr, "At event %d/%d\n", i, nr_counters);
+        perror("sys_perf_event_open");
+        // dont exit if it dont exists, just print
+        //exit(EXIT_FAILURE);
+      }
     }
 
   pd->wall_start = rdclock();
@@ -235,6 +235,10 @@ libperf_finalize(struct libperf_data *pd, void *id)
 
   for (i = 0; i < nr_counters; i++)
   {
+    // in case not all events are available on the system
+    if (pd->fds[i] == -1)
+      continue;
+
     assert(fds[i] >= 0);
     result = read(fds[i], count, sizeof(uint64_t));
     assert(result == sizeof(uint64_t));
@@ -299,6 +303,10 @@ libperf_close(struct libperf_data *pd)
 
   for (i = 0; i < nr_counters; i++)
   {
+    // in case not all events are available on the system
+    if (pd->fds[i] == -1)
+      continue;
+
     assert(pd->fds[i] >= 0);
     close(pd->fds[i]);
   }
