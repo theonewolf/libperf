@@ -33,14 +33,14 @@ syscall introduced in a mature form into the Linux Kernel mainline in 2009. This
 interface was previously only usable via a binary tool called 'perf' included in
 Linux Kernel source distributions today.
 
-There are several key shortcomings of interfacing with the system call only
-through a controlled binary.  The first is that the granularity of tracing
+There are several key shortcoming of interfacing with the system call only
+through a controlled binary. The first is that the granularity of tracing
 hardware performance counter registers and software tracepoints is at a whole
-binary level.  There is no method for tracing portions of code within the
-application if desired.  This is because there is no nice API exposed to
+binary level. There is no method for tracing portions of code within the
+application if desired. This is because there is no nice API exposed to
 userspace developers that can interface with this system call.  The second
 shortcoming is that the tool, although extensive, may not account for every
-possible use case for these counters and tracepoints.  Offering a
+possible use case for these counters and tracepoints. Offering a
 non-restrictive API to userspace gives developers full power and freedom to
 implement any functionality desired.
 
